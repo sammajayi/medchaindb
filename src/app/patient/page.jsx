@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle, Button } from "@/components/ui"
 import { Shield, Upload, FileText, Users, Activity } from "lucide-react"
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -57,9 +58,9 @@ export default function PatientDashboard() {
     )
   }
 
-  // Show access denied if not connected or wrong role
+
   if (!isConnected || (userRole && userRole !== "patient")) {
-    return null // Will redirect via useEffect
+    return null 
   }
 
   // UI only, no logic yet
@@ -84,53 +85,65 @@ export default function PatientDashboard() {
       )
       
       console.log('Upload successful!', { txHash, recordId: uploadData.recordId })
-      alert(`File "${file.name}" uploaded successfully! Transaction: ${txHash}`)
+      toast.success(`File "${file.name}" uploaded successfully!`, {
+        description: `Transaction: ${txHash}`
+      })
       
       // Refresh records list
       refetchPatientRecords()
     } catch (error) {
       console.error('Upload failed:', error)
-      alert(`Upload failed: ${error.message}`)
+  toast.error(`Upload failed: ${error.message}`)
     } finally {
       setIsUploading(false)
     }
   }
 
   const handleShareRecord = (record) => {
-    alert(`Share access for "${record.name}" - Use the Access Management tab to grant access to providers`)
+    toast.info(`Share access for "${record.name}"`, {
+      description: "Use the Access Management tab to grant access to providers"
+    })
   }
 
   const handleViewRecord = (record) => {
-    alert(`View "${record.name}" - This will open the IPFS viewer`)
+    toast.info(`View "${record.name}"`, {
+      description: "This will open the IPFS viewer"
+    })
   }
 
   const handleDownloadRecord = (record) => {
-    alert(`Download "${record.name}" - This will download from IPFS`)
+    toast.info(`Download "${record.name}"`, {
+      description: "This will download from IPFS"
+    })
   }
 
   const handleGrantAccess = async (providerAddress) => {
     try {
-      // For demo purposes, use record ID 1
+     
       const recordId = 1
       const txHash = await grantAccess(providerAddress, recordId)
-      alert(`Access granted to ${providerAddress}! Transaction: ${txHash}`)
+      toast.success(`Access granted to ${providerAddress}!`, {
+        description: `Transaction: ${txHash}`
+      })
       refetchPatientRecords()
     } catch (error) {
       console.error('Grant access failed:', error)
-      alert(`Failed to grant access: ${error.message}`)
+  toast.error(`Failed to grant access: ${error.message}`)
     }
   }
 
   const handleRevokeAccess = async (providerId) => {
     try {
-      // For demo purposes, use record ID 1
+     
       const recordId = 1
       const txHash = await revokeAccess(providerId, recordId)
-      alert(`Access revoked for provider ${providerId}! Transaction: ${txHash}`)
+      toast.success(`Access revoked for provider ${providerId}!`, {
+        description: `Transaction: ${txHash}`
+      })
       refetchPatientRecords()
     } catch (error) {
       console.error('Revoke access failed:', error)
-      alert(`Failed to revoke access: ${error.message}`)
+  toast.error(`Failed to revoke access: ${error.message}`)
     }
   }
   return (

@@ -2,6 +2,7 @@
 // This will be used to interact with the MedChainDb smart contract
 
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contractConfig'
+import { toast } from 'sonner'
 
 export class ContractService {
   constructor() {
@@ -36,8 +37,9 @@ export class ContractService {
       // Format records as needed for your UI
       return records
     } catch (error) {
-      console.error('Error fetching patient records:', error)
-      throw error
+  console.error('Error fetching patient records:', error)
+  toast.error(`Error fetching patient records: ${error.message}`)
+  throw error
     }
   }
 
@@ -59,8 +61,9 @@ export class ContractService {
       // Format records as needed for your UI
       return records
     } catch (error) {
-      console.error('Error fetching provider records:', error)
-      throw error
+  console.error('Error fetching provider records:', error)
+  toast.error(`Error fetching provider records: ${error.message}`)
+  throw error
     }
   }
 
@@ -92,8 +95,9 @@ export class ContractService {
         recordId: tx.recordId || null
       }
     } catch (error) {
-      console.error('Error uploading record:', error)
-      throw error
+  console.error('Error uploading record:', error)
+  toast.error(`Error uploading record: ${error.message}`)
+  throw error
     }
   }
 
@@ -110,8 +114,9 @@ export class ContractService {
       const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
       return mockTxHash
     } catch (error) {
-      console.error('Error granting access:', error)
-      throw error
+  console.error('Error granting access:', error)
+  toast.error(`Error granting access: ${error.message}`)
+  throw error
     }
   }
 
@@ -128,8 +133,9 @@ export class ContractService {
       const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
       return mockTxHash
     } catch (error) {
-      console.error('Error revoking access:', error)
-      throw error
+  console.error('Error revoking access:', error)
+  toast.error(`Error revoking access: ${error.message}`)
+  throw error
     }
   }
 
@@ -146,8 +152,9 @@ export class ContractService {
       const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
       return mockTxHash
     } catch (error) {
-      console.error('Error logging record access:', error)
-      throw error
+  console.error('Error logging record access:', error)
+  toast.error(`Error logging record access: ${error.message}`)
+  throw error
     }
   }
 
@@ -163,8 +170,9 @@ export class ContractService {
       
       return true // Mock: always return true for demo
     } catch (error) {
-      console.error('Error checking access:', error)
-      throw error
+  console.error('Error checking access:', error)
+  toast.error(`Error checking access: ${error.message}`)
+  throw error
     }
   }
 
@@ -180,8 +188,9 @@ export class ContractService {
       
       return "1.0.0" // Mock version
     } catch (error) {
-      console.error('Error getting version:', error)
-      throw error
+  console.error('Error getting version:', error)
+  toast.error(`Error getting contract version: ${error.message}`)
+  throw error
     }
   }
 

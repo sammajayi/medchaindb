@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { toast } from "sonner"
 import { Upload, FileText, Image, X, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui"
 import { ipfsService } from "@/lib/ipfs"
@@ -53,12 +54,12 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
     const maxSize = 10 * 1024 * 1024 // 10MB
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Please select a PDF, JPG, or PNG file.')
+      toast.error('Please select a PDF, JPG, or PNG file.')
       return false
     }
 
     if (file.size > maxSize) {
-      alert('File size must be less than 10MB.')
+      toast.error('File size must be less than 10MB.')
       return false
     }
 
@@ -75,7 +76,7 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
 
   const handleRealUpload = async (file) => {
     if (!address) {
-      alert('Please connect your wallet first')
+      toast.error('Please connect your wallet first')
       return
     }
 
@@ -117,7 +118,7 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
       
     } catch (error) {
       console.error('Upload failed:', error)
-      alert(`Upload failed: ${error.message}`)
+  toast.error(`Upload failed: ${error.message}`)
       setUploadProgress(0)
     }
   }

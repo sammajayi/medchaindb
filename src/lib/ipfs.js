@@ -1,5 +1,6 @@
 // IPFS integration utilities using Lighthouse
 import lighthouse from '@lighthouse-web3/sdk'
+import { toast } from 'sonner'
 
 export class IPFSService {
   constructor() {
@@ -36,8 +37,9 @@ console.log('File:', file);
       return uploadResponse.data.Hash
     } catch (error) {
       
-      console.error('Error uploading to IPFS via Lighthouse:', error)
-      throw error
+  console.error('Error uploading to IPFS via Lighthouse:', error)
+  toast.error(`IPFS upload failed: ${error.message}`)
+  throw error
     }
   }
 
@@ -59,10 +61,11 @@ console.log('File:', file);
       return blob
     } catch (error) {
       console.error('Error retrieving from IPFS:', error)
-       if (error.response) {
-    console.error('Response data:', await error.response.text());
-  }
-  throw error;
+      toast.error(`IPFS retrieval failed: ${error.message}`)
+      if (error.response) {
+        console.error('Response data:', await error.response.text());
+      }
+      throw error;
       
     }
   }

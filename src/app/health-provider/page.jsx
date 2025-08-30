@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, Button } from "@/components/ui";
 import { Shield, FileText, Search, Activity } from "lucide-react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -53,30 +54,34 @@ export default function ProviderDashboard() {
     )
   }
 
-  // Show access denied if not connected or wrong role
+ 
   if (!isConnected || (userRole && userRole !== "provider")) {
-    return null // Will redirect via useEffect
+    return null 
   }
 
   const handleViewRecord = async (record) => {
     try {
-      // Log the access
+      
       await logRecordAccess(record.id)
-      alert(`View "${record.name}" - Access logged to blockchain`)
+      toast.success(`View "${record.name}"`, {
+        description: "Access logged to blockchain"
+      })
     } catch (error) {
-      console.error('Failed to log access:', error)
-      alert(`View "${record.name}" - Failed to log access: ${error.message}`)
+      
+  toast.error(`View "${record.name}" - Failed to log access: ${error.message}`)
     }
   }
 
   const handleDownloadRecord = async (record) => {
     try {
-      // Log the access
+      
       await logRecordAccess(record.id)
-      alert(`Download "${record.name}" - Access logged to blockchain`)
+      toast.success(`Download "${record.name}"`, {
+        description: "Access logged to blockchain"
+      })
     } catch (error) {
-      console.error('Failed to log access:', error)
-      alert(`Download "${record.name}" - Failed to log access: ${error.message}`)
+      
+  toast.error(`Download "${record.name}" - Failed to log access: ${error.message}`)
     }
   }
   return (

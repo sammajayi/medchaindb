@@ -46,7 +46,7 @@ export function RoleSelection() {
         </p>
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
           <p className="text-green-800 text-sm">
-            <strong>Connected:</strong> {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
+            <strong>Connected:</strong> Hello, {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
           </p>
         </div>
       </div>
