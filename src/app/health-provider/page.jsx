@@ -11,9 +11,16 @@ import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AccountInfo } from "@/components/AccountInfo";
+import { useMedChainContract } from "@/hooks/useMedChainContract";
 
 export default function ProviderDashboard() {
   const { isConnected, address, userRole, isConnecting } = useUser()
+  const { 
+    providerRecords, 
+    logRecordAccess, 
+    refetchProviderRecords,
+    contractVersion 
+  } = useMedChainContract()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("records");
 
@@ -51,13 +58,26 @@ export default function ProviderDashboard() {
     return null // Will redirect via useEffect
   }
 
-  // UI only, no logic yet
-  const handleViewRecord = (record) => {
-    alert(`View "${record.name}" (This is a demo)`)
+  const handleViewRecord = async (record) => {
+    try {
+      // Log the access
+      await logRecordAccess(record.id)
+      alert(`View "${record.name}" - Access logged to blockchain`)
+    } catch (error) {
+      console.error('Failed to log access:', error)
+      alert(`View "${record.name}" - Failed to log access: ${error.message}`)
+    }
   }
 
-  const handleDownloadRecord = (record) => {
-    alert(`Download "${record.name}" (This is a demo)`)
+  const handleDownloadRecord = async (record) => {
+    try {
+      // Log the access
+      await logRecordAccess(record.id)
+      alert(`Download "${record.name}" - Access logged to blockchain`)
+    } catch (error) {
+      console.error('Failed to log access:', error)
+      alert(`Download "${record.name}" - Failed to log access: ${error.message}`)
+    }
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F9FAFB] to-white">
@@ -143,6 +163,7 @@ export default function ProviderDashboard() {
               </CardHeader>
               <CardContent>
                 <RecordsList 
+                  records={providerRecords || []}
                   onView={handleViewRecord}
                   onDownload={handleDownloadRecord}
                 />

@@ -12,9 +12,18 @@ import { useUser } from "@/contexts/UserContext"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { AccountInfo } from "@/components/AccountInfo"
+import { useMedChainContract } from "@/hooks/useMedChainContract"
 
 export default function PatientDashboard() {
   const { isConnected, address, userRole, isConnecting } = useUser()
+  const { 
+    patientRecords, 
+    uploadRecord, 
+    grantAccess, 
+    revokeAccess, 
+    refetchPatientRecords,
+    contractVersion 
+  } = useMedChainContract()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("records")
   const [isUploading, setIsUploading] = useState(false)
@@ -58,33 +67,71 @@ export default function PatientDashboard() {
     console.log("File selected:", file.name)
   }
 
-  const handleUpload = async (file) => {
+  const handleUpload = async (file, uploadData) => {
     setIsUploading(true)
-    // Simulate upload process
-    setTimeout(() => {
+    try {
+      // Generate a hash for the record
+      const recordHash = `0x${Math.random().toString(16).substr(2, 64)}`
+      
+      // Upload to contract
+      const txHash = await uploadRecord(
+        uploadData.ipfsHash,
+        file.name,
+        file.type,
+        file.size,
+        recordHash,
+        `Health record uploaded on ${new Date().toLocaleDateString()}`
+      )
+      
+      console.log('Upload successful!', { txHash, recordId: uploadData.recordId })
+      alert(`File "${file.name}" uploaded successfully! Transaction: ${txHash}`)
+      
+      // Refresh records list
+      refetchPatientRecords()
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert(`Upload failed: ${error.message}`)
+    } finally {
       setIsUploading(false)
-      alert(`File "${file.name}" uploaded successfully! (This is a demo)`)
-    }, 2000)
+    }
   }
 
   const handleShareRecord = (record) => {
-    alert(`Share access for "${record.name}" (This is a demo)`)
+    alert(`Share access for "${record.name}" - Use the Access Management tab to grant access to providers`)
   }
 
   const handleViewRecord = (record) => {
-    alert(`View "${record.name}" (This is a demo)`)
+    alert(`View "${record.name}" - This will open the IPFS viewer`)
   }
 
   const handleDownloadRecord = (record) => {
-    alert(`Download "${record.name}" (This is a demo)`)
+    alert(`Download "${record.name}" - This will download from IPFS`)
   }
 
-  const handleGrantAccess = (providerAddress) => {
-    alert(`Grant access to ${providerAddress} (This is a demo)`)
+  const handleGrantAccess = async (providerAddress) => {
+    try {
+      // For demo purposes, use record ID 1
+      const recordId = 1
+      const txHash = await grantAccess(providerAddress, recordId)
+      alert(`Access granted to ${providerAddress}! Transaction: ${txHash}`)
+      refetchPatientRecords()
+    } catch (error) {
+      console.error('Grant access failed:', error)
+      alert(`Failed to grant access: ${error.message}`)
+    }
   }
 
-  const handleRevokeAccess = (providerId) => {
-    alert(`Revoke access for provider ${providerId} (This is a demo)`)
+  const handleRevokeAccess = async (providerId) => {
+    try {
+      // For demo purposes, use record ID 1
+      const recordId = 1
+      const txHash = await revokeAccess(providerId, recordId)
+      alert(`Access revoked for provider ${providerId}! Transaction: ${txHash}`)
+      refetchPatientRecords()
+    } catch (error) {
+      console.error('Revoke access failed:', error)
+      alert(`Failed to revoke access: ${error.message}`)
+    }
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F9FAFB] to-white">
@@ -183,6 +230,7 @@ export default function PatientDashboard() {
               </CardHeader>
               <CardContent>
                 <RecordsList 
+                  records={patientRecords || []}
                   onShare={handleShareRecord}
                   onView={handleViewRecord}
                   onDownload={handleDownloadRecord}

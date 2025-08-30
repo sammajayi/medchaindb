@@ -89,11 +89,13 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
       
       // Step 2: Store metadata on blockchain
       console.log('Storing metadata on blockchain...')
-      const txHash = await contractService.uploadRecord(
+      const result = await contractService.uploadRecord(
         address,
         ipfsHash,
         file.name,
-        file.type
+        file.type,
+        file.size,
+        `Health record uploaded on ${new Date().toLocaleDateString()}`
       )
       setUploadProgress(90)
       
@@ -101,10 +103,11 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
       setUploadProgress(100)
       console.log('Upload complete!')
       console.log('IPFS Hash:', ipfsHash)
-      console.log('Transaction Hash:', txHash)
+      console.log('Transaction Hash:', result.txHash)
+      console.log('Record ID:', result.recordId)
       
       // Call the parent component's upload handler
-      onUpload?.(file, { ipfsHash, txHash })
+      onUpload?.(file, { ipfsHash, txHash: result.txHash, recordId: result.recordId })
       
       // Reset form
       setTimeout(() => {
@@ -223,13 +226,18 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
               </Button>
               <Button
                 onClick={() => handleRealUpload(selectedFile)}
-                disabled={isUploading}
+                disabled={isUploading || !address}
                 className="bg-[#008C99] hover:bg-[#007080] text-white"
               >
                 {isUploading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     Uploading...
+                  </>
+                ) : !address ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Connect Wallet to Upload
                   </>
                 ) : (
                   <>

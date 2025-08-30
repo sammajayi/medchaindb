@@ -1,26 +1,42 @@
-// IPFS integration utilities
-// This will be used to interact with IPFS for file storage and retrieval
+// IPFS integration utilities using Lighthouse
+import lighthouse from '@lighthouse-web3/sdk'
 
 export class IPFSService {
   constructor() {
-    // Initialize IPFS client (you'll need to install ipfs-http-client or similar)
-    // this.ipfs = create({ url: 'https://ipfs.infura.io:5001/api/v0' })
+   
+    this.apiKey = process.env.NEXT_PUBLIC_LIGHT_HOUSE_APIKEY
   }
 
-  // Upload file to IPFS
+  // Upload file to IPFS using Lighthouse
   async uploadFile(file) {
     try {
+      console.log('Uploading file to IPFS via Lighthouse:', file.name)
+      
       // Convert file to buffer
-      const buffer = await file.arrayBuffer()
+      // const buffer = await file.arrayBuffer()
       
-      // Upload to IPFS
-      // const result = await this.ipfs.add(buffer)
-      // return result.cid.toString()
+      // Upload to IPFS using Lighthouse uploadBuffer method
+      // const uploadResponse = await lighthouse.uploadBuffer(
+      //   // Buffer.from(buffer), 
+      //   this.apiKey,
+      //   file.name
+      // )
+      console.log('API Key:', this.apiKey);
+console.log('File:', file);
+      const uploadResponse = await lighthouse.upload(
+        [file],
+        this.apiKey
+      )
       
-      // For now, return a mock CID
-      return `QmMock${Date.now()}${Math.random().toString(36).substr(2, 9)}`
+
+
+      console.log('Lighthouse upload response:', uploadResponse)
+      
+      // Return the IPFS hash (CID)
+      return uploadResponse.data.Hash
     } catch (error) {
-      console.error('Error uploading to IPFS:', error)
+      
+      console.error('Error uploading to IPFS via Lighthouse:', error)
       throw error
     }
   }
@@ -28,36 +44,67 @@ export class IPFSService {
   // Retrieve file from IPFS
   async getFile(cid) {
     try {
-      // Fetch file from IPFS
-      // const chunks = []
-      // for await (const chunk of this.ipfs.cat(cid)) {
-      //   chunks.push(chunk)
-      // }
-      // return new Blob(chunks)
+      console.log('Fetching file from IPFS:', cid)
       
-      // For now, return a mock file
-      return new Blob(['Mock file content'], { type: 'application/pdf' })
+      // Fetch file from IPFS gateway
+      const response = await fetch(this.getFileUrl(cid))
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`)
+      }
+      
+      // Convert response to blob
+      const blob = await response.blob()
+      
+      return blob
     } catch (error) {
       console.error('Error retrieving from IPFS:', error)
-      throw error
+       if (error.response) {
+    console.error('Response data:', await error.response.text());
+  }
+  throw error;
+      
     }
   }
 
   // Get file info from IPFS
   async getFileInfo(cid) {
     try {
-      // Get file stats from IPFS
-      // const stats = await this.ipfs.files.stat(`/ipfs/${cid}`)
-      // return stats
+      console.log('Getting file info from IPFS:', cid)
       
-      // For now, return mock info
+      // Get file info from IPFS using Lighthouse
+      const fileInfo = await lighthouse.getFileInfo(cid)
+      
       return {
-        size: Math.floor(Math.random() * 5000000) + 100000, // Random size between 100KB-5MB
-        type: 'file'
+        size: fileInfo.data?.size || 0,
+        type: fileInfo.data?.type || 'file',
+        name: fileInfo.data?.name || 'Unknown',
+        cid: cid
       }
     } catch (error) {
       console.error('Error getting file info:', error)
-      throw error
+      // Return basic info if API call fails
+      return {
+        size: 0,
+        type: 'file',
+        name: 'Unknown',
+        cid: cid
+      }
+    }
+  }
+
+  // Get file access URL
+  getFileUrl(cid) {
+    return `https://gateway.lighthouse.storage/ipfs/${cid}`
+  }
+
+  // Check if file exists on IPFS
+  async fileExists(cid) {
+    try {
+      const response = await fetch(this.getFileUrl(cid), { method: 'HEAD' })
+      return response.ok
+    } catch (error) {
+      return false
     }
   }
 }

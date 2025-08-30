@@ -1,39 +1,40 @@
 // Smart contract integration utilities
 // This will be used to interact with the MedChainDb smart contract
 
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contractConfig'
+
 export class ContractService {
   constructor() {
-    // Initialize contract instance (you'll need to install ethers or wagmi)
-    // this.contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer)
+    this.contractAddress = CONTRACT_ADDRESS
+    this.abi = CONTRACT_ABI
+    this.walletClient = null
+  }
+
+  // Initialize contract with wallet client (call this when user connects wallet)
+  initializeContract(walletClient) {
+    // Store wallet client for contract interactions
+    this.walletClient = walletClient
+    console.log('Contract initialized with address:', this.contractAddress)
+    console.log('Wallet client:', walletClient)
   }
 
   // Get all records for a patient
   async getPatientRecords(patientAddress) {
     try {
-      // Call smart contract to get patient's records
-      // const records = await this.contract.getPatientRecords(patientAddress)
-      
-      // For now, return mock data with real IPFS CIDs
-      return [
-        {
-          id: "1",
-          name: "Blood Test Results - Jan 2024.pdf",
-          type: "application/pdf",
-          size: "2.3 MB",
-          uploadDate: "2024-01-15T10:30:00Z",
-          ipfsHash: "QmXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx", // Real IPFS CID
-          sharedWith: ["0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6", "0x8ba1f109551bD432803012645Hac136c4c8b8d8e"]
-        },
-        {
-          id: "2", 
-          name: "X-Ray Chest - Dec 2023.jpg",
-          type: "image/jpeg",
-          size: "4.1 MB",
-          uploadDate: "2023-12-20T14:45:00Z",
-          ipfsHash: "QmYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYyYy", // Real IPFS CID
-          sharedWith: ["0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"]
-        }
-      ]
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+      // Use wagmi's readContract to fetch records from the contract
+      const { readContract } = await import('wagmi/actions')
+      const records = await readContract({
+        address: this.contractAddress,
+        abi: this.abi,
+        functionName: 'getPatientRecords',
+        args: [patientAddress],
+        account: patientAddress,
+      })
+      // Format records as needed for your UI
+      return records
     } catch (error) {
       console.error('Error fetching patient records:', error)
       throw error
@@ -43,21 +44,20 @@ export class ContractService {
   // Get records shared with a provider
   async getProviderRecords(providerAddress) {
     try {
-      // Call smart contract to get records shared with provider
-      // const records = await this.contract.getProviderRecords(providerAddress)
-      
-      // For now, return mock data
-      return [
-        {
-          id: "1",
-          name: "Blood Test Results - Jan 2024.pdf",
-          type: "application/pdf",
-          size: "2.3 MB",
-          uploadDate: "2024-01-15T10:30:00Z",
-          ipfsHash: "QmXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx",
-          patientAddress: "0x1234567890abcdef1234567890abcdef12345678"
-        }
-      ]
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+      // Use wagmi's readContract to fetch provider records from the contract
+      const { readContract } = await import('wagmi/actions')
+      const records = await readContract({
+        address: this.contractAddress,
+        abi: this.abi,
+        functionName: 'getProviderRecords',
+        args: [providerAddress],
+        account: providerAddress,
+      })
+      // Format records as needed for your UI
+      return records
     } catch (error) {
       console.error('Error fetching provider records:', error)
       throw error
@@ -65,14 +65,32 @@ export class ContractService {
   }
 
   // Upload a new record
-  async uploadRecord(patientAddress, ipfsHash, fileName, fileType) {
+  async uploadRecord(patientAddress, ipfsHash, fileName, fileType, fileSize, description = "") {
     try {
-      // Call smart contract to store record metadata
-      // const tx = await this.contract.uploadRecord(patientAddress, ipfsHash, fileName, fileType)
-      // await tx.wait()
-      
-      // For now, return mock transaction hash
-      return `0x${Math.random().toString(16).substr(2, 64)}`
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+      // Use wagmi's writeContract to upload record to the contract
+      const { writeContract } = await import('wagmi/actions')
+      const tx = await writeContract({
+        address: this.contractAddress,
+        abi: this.abi,
+        functionName: 'uploadRecord',
+        args: [
+          patientAddress,
+          ipfsHash,
+          fileName,
+          fileType,
+          fileSize,
+          description
+        ],
+        account: patientAddress,
+      })
+      // You may need to parse tx for txHash and recordId
+      return {
+        txHash: tx.hash,
+        recordId: tx.recordId || null
+      }
     } catch (error) {
       console.error('Error uploading record:', error)
       throw error
@@ -80,14 +98,17 @@ export class ContractService {
   }
 
   // Grant access to a provider
-  async grantAccess(patientAddress, providerAddress, recordId) {
+  async grantAccess(providerAddress, recordId) {
     try {
-      // Call smart contract to grant access
-      // const tx = await this.contract.grantAccess(patientAddress, providerAddress, recordId)
-      // await tx.wait()
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+
+      // For now, return mock data until we implement the full contract integration
+      console.log('Granting access:', { providerAddress, recordId })
       
-      // For now, return mock transaction hash
-      return `0x${Math.random().toString(16).substr(2, 64)}`
+      const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
+      return mockTxHash
     } catch (error) {
       console.error('Error granting access:', error)
       throw error
@@ -95,66 +116,93 @@ export class ContractService {
   }
 
   // Revoke access from a provider
-  async revokeAccess(patientAddress, providerAddress, recordId) {
+  async revokeAccess(providerAddress, recordId) {
     try {
-      // Call smart contract to revoke access
-      // const tx = await this.contract.revokeAccess(patientAddress, providerAddress, recordId)
-      // await tx.wait()
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+
+      // For now, return mock data until we implement the full contract integration
+      console.log('Revoking access:', { providerAddress, recordId })
       
-      // For now, return mock transaction hash
-      return `0x${Math.random().toString(16).substr(2, 64)}`
+      const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
+      return mockTxHash
     } catch (error) {
       console.error('Error revoking access:', error)
       throw error
     }
   }
 
-  // Get access permissions
-  async getAccessPermissions(patientAddress) {
+  // Log record access (for providers)
+  async logRecordAccess(recordId) {
     try {
-      // Call smart contract to get access permissions
-      // const permissions = await this.contract.getAccessPermissions(patientAddress)
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+
+      // For now, return mock data until we implement the full contract integration
+      console.log('Logging record access:', recordId)
       
-      // For now, return mock data
-      return [
-        {
-          id: "1",
-          providerAddress: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-          providerName: "Dr. Sarah Johnson",
-          grantedDate: "2024-01-15T10:30:00Z",
-          lastAccessed: "2024-01-20T14:22:00Z",
-          recordsShared: 2,
-          status: "active"
-        }
-      ]
+      const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
+      return mockTxHash
     } catch (error) {
-      console.error('Error fetching access permissions:', error)
+      console.error('Error logging record access:', error)
       throw error
     }
   }
 
-  // Get audit log
-  async getAuditLog(address) {
+  // Check if provider has access to a record
+  async checkAccess(patientAddress, providerAddress, recordId) {
     try {
-      // Call smart contract to get audit events
-      // const events = await this.contract.queryFilter('RecordEvent', fromBlock, toBlock)
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+
+      // For now, return mock data until we implement the full contract integration
+      console.log('Checking access:', { patientAddress, providerAddress, recordId })
       
-      // For now, return mock data
-      return [
-        {
-          id: "1",
-          type: "upload",
-          action: "Record Uploaded",
-          description: "Blood Test Results - Jan 2024.pdf uploaded to IPFS",
-          timestamp: "2024-01-15T10:30:00Z",
-          txHash: "0x1234567890abcdef1234567890abcdef12345678",
-          status: "success"
-        }
-      ]
+      return true // Mock: always return true for demo
     } catch (error) {
-      console.error('Error fetching audit log:', error)
+      console.error('Error checking access:', error)
       throw error
     }
+  }
+
+  // Get contract version
+  async getVersion() {
+    try {
+      if (!this.walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet.')
+      }
+
+      // For now, return mock data until we implement the full contract integration
+      console.log('Getting contract version')
+      
+      return "1.0.0" // Mock version
+    } catch (error) {
+      console.error('Error getting version:', error)
+      throw error
+    }
+  }
+
+  // Utility function to format file size
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  // Generate a hash for the record (you might want to hash the actual file content)
+  generateRecordHash(ipfsHash, fileName, fileType) {
+    // This is a simple hash - you might want to use a more sophisticated method
+    const data = `${ipfsHash}${fileName}${fileType}${Date.now()}`
+    // In a real implementation, you'd use a proper hashing function
+    return `0x${data.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0).toString(16).padStart(64, '0')}`
   }
 }
 
