@@ -3,10 +3,15 @@
 import { useState, useRef } from "react"
 import { Upload, FileText, Image, X, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui"
+import { ipfsService } from "@/lib/ipfs"
+import { contractService } from "@/lib/contract"
+import { useUser } from "@/contexts/UserContext"
 
 export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
+  const { address } = useUser()
   const [selectedFile, setSelectedFile] = useState(null)
   const [dragActive, setDragActive] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef(null)
 
   const handleDrag = (e) => {
@@ -62,8 +67,55 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
 
   const removeFile = () => {
     setSelectedFile(null)
+    setUploadProgress(0)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const handleRealUpload = async (file) => {
+    if (!address) {
+      alert('Please connect your wallet first')
+      return
+    }
+
+    try {
+      setUploadProgress(10)
+      
+      // Step 1: Upload file to IPFS
+      console.log('Uploading to IPFS...')
+      const ipfsHash = await ipfsService.uploadFile(file)
+      setUploadProgress(50)
+      
+      // Step 2: Store metadata on blockchain
+      console.log('Storing metadata on blockchain...')
+      const txHash = await contractService.uploadRecord(
+        address,
+        ipfsHash,
+        file.name,
+        file.type
+      )
+      setUploadProgress(90)
+      
+      // Step 3: Complete
+      setUploadProgress(100)
+      console.log('Upload complete!')
+      console.log('IPFS Hash:', ipfsHash)
+      console.log('Transaction Hash:', txHash)
+      
+      // Call the parent component's upload handler
+      onUpload?.(file, { ipfsHash, txHash })
+      
+      // Reset form
+      setTimeout(() => {
+        removeFile()
+        setUploadProgress(0)
+      }, 1000)
+      
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert(`Upload failed: ${error.message}`)
+      setUploadProgress(0)
     }
   }
 
@@ -143,31 +195,50 @@ export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
             </div>
           </div>
           
-          <div className="mt-6 flex justify-end space-x-3">
-            <Button
-              onClick={removeFile}
-              variant="outline"
-              className="border-gray-300 text-gray-600 hover:bg-gray-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => onUpload?.(selectedFile)}
-              disabled={isUploading}
-              className="bg-[#008C99] hover:bg-[#007080] text-white"
-            >
-              {isUploading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Upload to IPFS
-                </>
-              )}
-            </Button>
+          <div className="mt-6 space-y-4">
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Uploading to IPFS...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-[#008C99] h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3">
+              <Button
+                onClick={removeFile}
+                variant="outline"
+                className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                disabled={isUploading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleRealUpload(selectedFile)}
+                disabled={isUploading}
+                className="bg-[#008C99] hover:bg-[#007080] text-white"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Upload to IPFS
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

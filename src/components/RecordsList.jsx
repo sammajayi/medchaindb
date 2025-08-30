@@ -4,6 +4,7 @@ import { useState } from "react"
 import { FileText, Image, Download, Share, Eye, MoreVertical, Calendar, Hash } from "lucide-react"
 import { Button } from "@/components/ui"
 import { useUser } from "@/contexts/UserContext"
+import { IPFSViewer } from "@/components/IPFSViewer"
 
 // Dummy data for demonstration
 const dummyRecords = [
@@ -39,9 +40,15 @@ const dummyRecords = [
 export function RecordsList({ records = dummyRecords, onShare, onView, onDownload }) {
   const { address } = useUser()
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [viewingRecord, setViewingRecord] = useState(null)
 
   // Use actual address if available, otherwise use dummy data
   const displayRecords = address ? records : []
+
+  const handleViewRecord = (record) => {
+    setViewingRecord(record)
+    onView?.(record)
+  }
 
   const getFileIcon = (type) => {
     if (type === 'application/pdf') {
@@ -108,10 +115,10 @@ export function RecordsList({ records = dummyRecords, onShare, onView, onDownloa
             
             <div className="flex items-center space-x-2">
               <Button
-                onClick={() => onView?.(record)}
+                onClick={() => handleViewRecord(record)}
                 variant="ghost"
                 className="text-gray-600 hover:text-[#008C99]"
-                title="View Record"
+                title="View Record from IPFS"
               >
                 <Eye className="w-4 h-4" />
               </Button>
@@ -135,6 +142,14 @@ export function RecordsList({ records = dummyRecords, onShare, onView, onDownloa
           </div>
         </div>
       ))}
+      
+      {/* IPFS Viewer Modal */}
+      {viewingRecord && (
+        <IPFSViewer 
+          record={viewingRecord}
+          onClose={() => setViewingRecord(null)}
+        />
+      )}
     </div>
   )
 }
