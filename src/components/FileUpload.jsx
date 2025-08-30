@@ -1,0 +1,176 @@
+"use client"
+
+import { useState, useRef } from "react"
+import { Upload, FileText, Image, X, CheckCircle } from "lucide-react"
+import { Button } from "@/components/ui"
+
+export function FileUpload({ onFileSelect, onUpload, isUploading = false }) {
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [dragActive, setDragActive] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleDrag = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0]
+      if (validateFile(file)) {
+        setSelectedFile(file)
+        onFileSelect?.(file)
+      }
+    }
+  }
+
+  const handleFileInput = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      if (validateFile(file)) {
+        setSelectedFile(file)
+        onFileSelect?.(file)
+      }
+    }
+  }
+
+  const validateFile = (file) => {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+    const maxSize = 10 * 1024 * 1024 // 10MB
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a PDF, JPG, or PNG file.')
+      return false
+    }
+
+    if (file.size > maxSize) {
+      alert('File size must be less than 10MB.')
+      return false
+    }
+
+    return true
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const getFileIcon = (type) => {
+    if (type === 'application/pdf') {
+      return <FileText className="w-8 h-8 text-red-500" />
+    }
+    return <Image className="w-8 h-8 text-blue-500" />
+  }
+
+  return (
+    <div className="w-full">
+      {!selectedFile ? (
+        <div
+          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            dragActive 
+              ? 'border-[#3DDAB4] bg-[#3DDAB4]/5' 
+              : 'border-gray-300 hover:border-[#008C99]'
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <div className="w-16 h-16 bg-[#3DDAB4]/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Upload className="w-8 h-8 text-[#008C99]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[#1E293B] mb-2">
+            Upload Health Record
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Drag and drop your file here, or click to browse
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Supports PDF, JPG, PNG files up to 10MB
+          </p>
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-[#008C99] hover:bg-[#007080] text-white"
+          >
+            Choose File
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={handleFileInput}
+            className="hidden"
+          />
+        </div>
+      ) : (
+        <div className="border border-gray-200 rounded-lg p-6 bg-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {getFileIcon(selectedFile.type)}
+              <div>
+                <p className="font-medium text-[#1E293B]">{selectedFile.name}</p>
+                <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={removeFile}
+                variant="ghost"
+                className="text-gray-500 hover:text-red-500"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end space-x-3">
+            <Button
+              onClick={removeFile}
+              variant="outline"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => onUpload?.(selectedFile)}
+              disabled={isUploading}
+              className="bg-[#008C99] hover:bg-[#007080] text-white"
+            >
+              {isUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Upload to IPFS
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
