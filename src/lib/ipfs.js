@@ -22,7 +22,7 @@ export class IPFSService {
       //   this.apiKey,
       //   file.name
       // )
-      console.log('API Key:', this.apiKey);
+     
 console.log('File:', file);
       const uploadResponse = await lighthouse.upload(
         [file],
